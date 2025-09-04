@@ -46,8 +46,9 @@ async function handleAuth(e: React.FormEvent) {
         });
         if (error) throw error;
       }
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -125,7 +126,7 @@ async function handleAuth(e: React.FormEvent) {
           >
             {isSignUp
               ? "Already have an account? Sign in"
-              : "Don't have an account? Sign up"}
+              : "Don&apos;t have an account? Sign up"}
           </button>
 
             </div>
