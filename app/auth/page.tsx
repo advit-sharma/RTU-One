@@ -126,7 +126,7 @@ async function handleAuth(e: React.FormEvent) {
           >
             {isSignUp
               ? "Already have an account? Sign in"
-              : "Don&apos;t have an account? Sign up"}
+              : "Don't have an account? Sign up"}
           </button>
 
             </div>
