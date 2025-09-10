@@ -2,11 +2,12 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "imljzgcuelzzzncfzlnc.supabase.co",
-      },
+    domains: [
+      'localhost',
+      'images.unsplash.com',
+      'lh3.googleusercontent.com',
+      'avatars.githubusercontent.com',
+      'imljzgcuelzzzncfzlnc.supabase.co',
     ],
   },
   eslint: {

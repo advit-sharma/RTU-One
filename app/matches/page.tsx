@@ -14,6 +14,7 @@ export default function MatchesPage() {
 
   const [showMatchNotification, setShowMatchNotification] = useState(false);
   const [matchedUser, setMatchedUser] = useState<UserProfile | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -35,6 +36,7 @@ export default function MatchesPage() {
   async function handleLike() {
     if (currentIndex < potentialMatches.length) {
       const likedUser = potentialMatches[currentIndex];
+      setError(null);
 
       try {
         const result = await likeUser(likedUser.id);
@@ -46,13 +48,14 @@ export default function MatchesPage() {
 
         setCurrentIndex((prev) => prev + 1);
       } catch (err) {
-        console.error(err);
+        console.error("Error liking user:", err);
+        setError(err instanceof Error ? err.message : "Failed to like user. Please try again.");
       }
     }
   }
 
   function handlePass() {
-    if (currentIndex < potentialMatches.length - 1) {
+    if (currentIndex < potentialMatches.length) {
       setCurrentIndex((prev) => prev + 1);
     }
   }
@@ -79,20 +82,31 @@ export default function MatchesPage() {
       <div className="h-full bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="w-24 h-24 bg-gradient-to-r from-pink-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-4xl">💕</span>
+            <span className="text-4xl">⏳</span>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            No more profiles to show
+            Wait for more people to join!
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Check back later for new matches, or try adjusting your preferences!
+            You've seen all available profiles. Check back later as more people join the platform, or try adjusting your preferences to see more matches!
           </p>
-          <button
-            onClick={() => setCurrentIndex(0)}
-            className="bg-gradient-to-r from-pink-500 to-red-500 text-white font-semibold py-3 px-6 rounded-full hover:from-pink-600 hover:to-red-600 transition-all duration-200"
-          >
-            Refresh
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setCurrentIndex(0);
+                window.location.reload();
+              }}
+              className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white font-semibold py-3 px-6 rounded-full hover:from-pink-600 hover:to-red-600 transition-all duration-200"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={() => router.push('/profile/edit')}
+              className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-3 px-6 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+            >
+              Update Preferences
+            </button>
+          </div>
         </div>
         {showMatchNotification && matchedUser && (
           <MatchNotification
@@ -149,6 +163,11 @@ export default function MatchesPage() {
           <div className="mt-8">
             <MatchButtons onLike={handleLike} onPass={handlePass} />
           </div>
+          {error && (
+            <div className="mt-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg">
+              <p className="text-red-700 dark:text-red-300 text-sm text-center">{error}</p>
+            </div>
+          )}
         </div>
 
         {showMatchNotification && matchedUser && (

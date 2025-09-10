@@ -75,15 +75,36 @@ export async function likeUser(toUserId: string) {
     throw new Error("Not authenticated.");
   }
 
+  // Check if like already exists to prevent duplicates
+  const { data: existingLikeCheck, error: checkExistingError } = await supabase
+    .from("likes")
+    .select("*")
+    .eq("from_user_id", user.id)
+    .eq("to_user_id", toUserId)
+    .single();
+
+  if (checkExistingError && checkExistingError.code !== "PGRST116") {
+    console.error("Error checking existing like:", checkExistingError);
+    throw new Error("Failed to check existing like");
+  }
+
+  if (existingLikeCheck) {
+    // Like already exists, just return success
+    return { success: true, isMatch: false };
+  }
+
+  // Create the like
   const { error: likeError } = await supabase.from("likes").insert({
     from_user_id: user.id,
     to_user_id: toUserId,
   });
 
   if (likeError) {
-    throw new Error("Failed to create like");
+    console.error("Error creating like:", likeError);
+    throw new Error(`Failed to create like: ${likeError.message}`);
   }
 
+  // Check if the other user has already liked this user (mutual like = match)
   const { data: existingLike, error: checkError } = await supabase
     .from("likes")
     .select("*")
@@ -92,10 +113,24 @@ export async function likeUser(toUserId: string) {
     .single();
 
   if (checkError && checkError.code !== "PGRST116") {
+    console.error("Error checking for match:", checkError);
     throw new Error("Failed to check for match");
   }
 
   if (existingLike) {
+    // Create a match record
+    const { error: matchError } = await supabase.from("matches").insert({
+      user1_id: user.id,
+      user2_id: toUserId,
+      is_active: true,
+    });
+
+    if (matchError) {
+      console.error("Error creating match:", matchError);
+      // Don't throw error here, just log it as the like was successful
+    }
+
+    // Get the matched user's profile
     const { data: matchedUser, error: userError } = await supabase
       .from("users")
       .select("*")
@@ -103,13 +138,31 @@ export async function likeUser(toUserId: string) {
       .single();
 
     if (userError) {
+      console.error("Error fetching matched user:", userError);
       throw new Error("Failed to fetch matched user");
     }
 
     return {
       success: true,
       isMatch: true,
-      matchedUser: matchedUser as UserProfile,
+      matchedUser: {
+        id: matchedUser.id,
+        full_name: matchedUser.full_name,
+        username: matchedUser.username,
+        email: matchedUser.email || "",
+        gender: matchedUser.gender,
+        birthdate: matchedUser.birthdate,
+        bio: matchedUser.bio,
+        avatar_url: matchedUser.avatar_url,
+        preferences: matchedUser.preferences,
+        location_lat: undefined,
+        location_lng: undefined,
+        last_active: new Date().toISOString(),
+        is_verified: true,
+        is_online: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as UserProfile,
     };
   }
 
